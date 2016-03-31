@@ -53,12 +53,12 @@ TARGET = $(lastword $(subst /, ,$(CURDIR)))
 # Object files: will find all .c/.h files in current directory
 #  and in LIBDIR.  If you have any other (sub-)directories with code,
 #  you can add them in to SOURCES below in the wildcard statement.
-SOURCES=$(wildcard *.c $(LIBDIR)/*.c)
+SOURCES=$(wildcard *.c $(LIBDIR)/**/**/*.c)
 OBJECTS=$(SOURCES:.c=.o)
 HEADERS=$(SOURCES:.c=.h)
 
 ## Compilation options, type man avr-gcc if you're curious.
-CPPFLAGS = -D$(DEVICE) -DF_CPU=$(F_CPU) -DBAUD=$(BAUD) -I. -I$(LIBDIR)
+CPPFLAGS = -D$(DEVICE) -DUSE_SPI -DF_CPU=$(F_CPU) -DBAUD=$(BAUD) -I. -Idelay -I$(LIBDIR) -I$(LIBDIR)/config -Iioport -Iioport/mega -Iutils -Iutils/preprocessor -Iclock -Ispi
 CFLAGS = -Os -g -std=gnu99 -Wall
 ## Use short (8-bit) data types 
 CFLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums 

@@ -1,4 +1,4 @@
-#include "main.h"
+#include <stdint.h>
 #include "driver/include/m2m_wifi.h"
 
 // -------- Global Variables --------- //
@@ -12,6 +12,7 @@ static void wifi_cb(uint8_t u8MsgType, void *pvMsg)
 int main(void) {
   // -------- Inits --------- //
   tstrWifiInitParam param;
+  nm_bsp_init();
   // ------ Event loop ------ //
   while (1) {
 
