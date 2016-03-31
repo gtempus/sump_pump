@@ -13,6 +13,8 @@ int main(void) {
   // -------- Inits --------- //
   tstrWifiInitParam param;
   nm_bsp_init();
+  m2m_memset((uint8*)&param, 0, sizeof(param));
+  
   // ------ Event loop ------ //
   while (1) {
 

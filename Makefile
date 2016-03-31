@@ -58,7 +58,7 @@ OBJECTS=$(SOURCES:.c=.o)
 HEADERS=$(SOURCES:.c=.h)
 
 ## Compilation options, type man avr-gcc if you're curious.
-CPPFLAGS = -D$(DEVICE) -DUSE_SPI -DF_CPU=$(F_CPU) -DBAUD=$(BAUD) -I. -Idelay -I$(LIBDIR) -I$(LIBDIR)/config -Iioport -Iioport/mega -Iutils -Iutils/preprocessor -Iclock -Ispi
+CPPFLAGS = -D$(DEVICE) -DCONF_WINC_USE_SPI -DNM_EDGE_INTERRUPT -DF_CPU=$(F_CPU) -DBAUD=$(BAUD) -I. -Idelay -I$(LIBDIR) -I$(LIBDIR)/config -Iioport -Iioport/mega -Iutils -Iutils/preprocessor -Iclock -Ispi
 CFLAGS = -Os -g -std=gnu99 -Wall
 ## Use short (8-bit) data types 
 CFLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums 
