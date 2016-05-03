@@ -17,24 +17,15 @@
 // Setup the WINC1500 connection with the pins above and the default hardware SPI.
 Adafruit_WINC1500 WiFi(WINC_CS, WINC_IRQ, WINC_RST);
 
-// Or just use hardware SPI (SCK/MOSI/MISO) and defaults, SS -> #10, INT -> #7, RST -> #5, EN -> 3-5V
-//Adafruit_WINC1500 WiFi;
-
-char ssid[] = "Apple Network ad29eb";      //  your network SSID (name)
-char pass[] = "yqtianja4cgdu0wa";   // your network password
-int keyIndex = 0;            // your network key Index number (needed only for WEP)
-
+const char ssid[] = "Apple Network ad29eb";      //  your network SSID (name)
+const char pass[] = "yqtianja4cgdu0wa";   // your network password
 int status = WL_IDLE_STATUS;
 
 // Initialize the Wifi client library
 Adafruit_WINC1500Client client;
 
 // server address:
-// if you don't want to use DNS (and reduce your sketch size)
-// use the numeric IP instead of the name for the server:
 IPAddress server(192,168,254,51);  // numeric IP for test page (no DNS)
-//char server[] = "www.adafruit.com";    // domain name for test page (using DNS)
-#define webpage "/cycle"  // path to test page
 
 unsigned long lastConnectionTime = 0;            // last time you connected to the server, in milliseconds
 const unsigned long postingInterval = 10L * 1000L; // delay between updates, in milliseconds
@@ -48,52 +39,38 @@ void setup() {
   digitalWrite(WINC_EN, HIGH);
 #endif
 
-  //Initialize serial and wait for port to open:
-  Serial.begin(9600);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
+  Serial.begin(9600); //Initialize serial and wait for port to open
+  while (!Serial) {;} // wait for serial port to connect. Needed for native USB port only
 
   // check for the presence of the shield:
   if (WiFi.status() == WL_NO_SHIELD) {
     Serial.println("WiFi shield not present");
-    // don't continue:
-    while (true);
+    while (true); // don't continue:
   }
 
   // attempt to connect to Wifi network:
   while ( status != WL_CONNECTED) {
     Serial.print("Attempting to connect to SSID: ");
     Serial.println(ssid);
-    // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
-    status = WiFi.begin(ssid, pass);
-
-    // wait 10 seconds for connection:
-    delay(10000);
+    status = WiFi.begin(ssid, pass); // Connect to WPA/WPA2 network.
+    delay(10000); // wait 10 seconds for connection
   }
-  // you're connected now, so print out the status:
-  printWifiStatus();
+  
+  printWifiStatus(); // you're connected now, so print out the status:
 }
 
 void loop() {
-  // if there's incoming data from the net connection.
-  // send it out the serial port.  This is for debugging
-  // purposes only:
-  while (client.available()) {
-    char c = client.read();
-    Serial.write(c);
-  }
-
   // if ten seconds have passed since your last connection,
   // then connect again and send data:
   if (millis() - lastConnectionTime > postingInterval) {
-    httpRequest("/cycle", pump_status);
+      httpRequest("/cycle", pump_status);
+      httpRequest("/ac", ac_status);
+      pump_status = !pump_status;
+      ac_status = 1;
   }
-
 }
 
-// this method makes a HTTP connection to the server:
-void httpRequest(char endpoint[], int data) {
+void httpRequest(char *endpoint, int data) {
   // close any connection before send a new request.
   // This will free the socket on the WiFi shield
   client.stop();
@@ -113,17 +90,30 @@ void httpRequest(char endpoint[], int data) {
     client.println();
     client.print("{\"state\":\""); client.print(data); client.println("\"}");
     client.println();
+    client.flush();
 
+    printResponse();
+    
     // note the time that the connection was made:
     lastConnectionTime = millis();
-    pump_status = !pump_status;
-  }
+   }
   else {
     // if you couldn't make a connection:
     Serial.println("connection failed");
   }
 }
 
+void printResponse() {
+  while(!client.available()){;} //wait for the request to finish.
+    
+  // if there's incoming data from the net connection.
+  // send it out the serial port.  This is for debugging
+  // purposes only:
+  while (client.available()) {
+    char c = client.read();
+    Serial.write(c);
+  }
+}
 
 void printWifiStatus() {
   // print the SSID of the network you're attached to:
