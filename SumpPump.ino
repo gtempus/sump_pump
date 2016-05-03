@@ -31,8 +31,10 @@ Adafruit_WINC1500Client client;
 // server address:
 IPAddress server(192,168,254,51);  // numeric IP for test page (no DNS)
 
-unsigned long lastConnectionTime = 0;            // last time you connected to the server, in milliseconds
-const unsigned long postingInterval = 10L * 1000L; // delay between updates, in milliseconds
+unsigned long       lastConnectionTime     = 0;            // last time you connected to the server, in milliseconds
+const unsigned long postingInterval        = 10L * 1000L; // delay between updates, in milliseconds
+unsigned long       lastTempConnectionTime = 0;
+const unsigned long tempPostingInterval    = 60L * 1000L;
 
 bool pump_status = 0;
 bool ac_status = 0;
@@ -69,9 +71,13 @@ void loop() {
   if (millis() - lastConnectionTime > postingInterval) {
       httpRequest("/cycle", pump_status);
       httpRequest("/ac", ac_status);
-      httpRequest("/hub_temp", hubTemp());
       pump_status = !pump_status;
       ac_status = 1;
+  }
+
+  if (millis() - lastTempConnectionTime > tempPostingInterval) {
+    httpRequest("/hub_temp", hubTemp());
+    lastTempConnectionTime = millis();
   }
 }
 
