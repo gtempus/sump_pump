@@ -40,6 +40,7 @@ unsigned long lastConnectionTime = 0;            // last time you connected to t
 const unsigned long postingInterval = 10L * 1000L; // delay between updates, in milliseconds
 
 bool pump_status = 0;
+bool ac_status = 0;
 
 void setup() {
 #ifdef WINC_EN
@@ -86,13 +87,13 @@ void loop() {
   // if ten seconds have passed since your last connection,
   // then connect again and send data:
   if (millis() - lastConnectionTime > postingInterval) {
-    httpRequest();
+    httpRequest("/cycle", pump_status);
   }
 
 }
 
 // this method makes a HTTP connection to the server:
-void httpRequest() {
+void httpRequest(char endpoint[], int data) {
   // close any connection before send a new request.
   // This will free the socket on the WiFi shield
   client.stop();
@@ -100,16 +101,17 @@ void httpRequest() {
   // if there's a successful connection:
   if (client.connect(server, 80)) {
     Serial.println("connecting...");
-    Serial.print("Pump Status: "); Serial.println(pump_status);
+    Serial.print("Endpoint: "); Serial.println(endpoint);
+    Serial.print("Pump Data: "); Serial.println(data);
     // Make a HTTP request:
     client.print("POST ");
-    client.print(webpage); client.println(" HTTP/1.1");
+    client.print(endpoint); client.println(" HTTP/1.1");
     client.print("Host: "); client.println(server);
     client.print("Content-Type: "); client.println("application/json");
     client.print("Content-Length: "); client.println("13");
     client.println("Connection: close");
     client.println();
-    client.print("{\"state\":\""); client.print(pump_status); client.println("\"}");
+    client.print("{\"state\":\""); client.print(data); client.println("\"}");
     client.println();
 
     // note the time that the connection was made:
