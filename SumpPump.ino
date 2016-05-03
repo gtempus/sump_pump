@@ -3,6 +3,10 @@
 
 const unsigned int TEMP_SENSOR_PIN = A0;
 const float        SUPPLY_VOLTAGE  = 5.0;
+
+const unsigned int PUMP_CYCLE_TEST_PIN = 2;
+const unsigned int PUMP_AC_TEST_PIN    = 3;
+
 const unsigned int BAUD_RATE       = 9600;
 
 // Define the WINC1500 board connections below.
@@ -11,7 +15,6 @@ const unsigned int BAUD_RATE       = 9600;
 #define WINC_CS   8
 #define WINC_IRQ  7
 #define WINC_RST  4
-#define WINC_EN   2     // or, tie EN to VCC and comment this out
 // The SPI pins of the WINC1500 (SCK, MOSI, MISO) should be
 // connected to the hardware SPI port of the Arduino.
 // On an Uno or compatible these are SCK = #13, MISO = #12, MOSI = #11.
@@ -36,18 +39,16 @@ const unsigned long postingInterval        = 10L * 1000L; // delay between updat
 unsigned long       lastTempConnectionTime = 0;
 const unsigned long tempPostingInterval    = 60L * 1000L;
 
-bool pump_status = 0;
-bool ac_status = 0;
+bool pump_status = 1; // Pull-up resistor causes '1' to represent pump OFF; '0' for pump ON.
+bool ac_status = 0;   // Pull-up resistor causes '0' to represent pump AC ON; '1' for pump AC OFF.
 
 void setup() {
-#ifdef WINC_EN
-  pinMode(WINC_EN, OUTPUT);
-  digitalWrite(WINC_EN, HIGH);
-#endif
-
   Serial.begin(BAUD_RATE); //Initialize serial and wait for port to open
   while (!Serial) {;} // wait for serial port to connect. Needed for native USB port only
 
+  pinMode(PUMP_CYCLE_TEST_PIN, INPUT);
+  digitalWrite(PUMP_CYCLE_TEST_PIN, HIGH); // Set internal pull-up resistor.
+  
   // check for the presence of the shield:
   if (WiFi.status() == WL_NO_SHIELD) {
     Serial.println("WiFi shield not present");
@@ -69,10 +70,14 @@ void loop() {
   // if ten seconds have passed since your last connection,
   // then connect again and send data:
   if (millis() - lastConnectionTime > postingInterval) {
-      httpRequest("/cycle", pump_status);
       httpRequest("/ac", ac_status);
-      pump_status = !pump_status;
       ac_status = 1;
+  }
+
+  int pump_cycle_current_state = digitalRead(PUMP_CYCLE_TEST_PIN);
+  if (pump_cycle_current_state != pump_status) {
+    pump_status = !pump_cycle_current_state;
+    httpRequest("/cycle", pump_status);
   }
 
   if (millis() - lastTempConnectionTime > tempPostingInterval) {
