@@ -1,6 +1,10 @@
 #include <SPI.h>
 #include <Adafruit_WINC1500.h>
 
+const unsigned int TEMP_SENSOR_PIN = A0;
+const float        SUPPLY_VOLTAGE  = 5.0;
+const unsigned int BAUD_RATE       = 9600;
+
 // Define the WINC1500 board connections below.
 // If you're following the Adafruit WINC1500 board
 // guide you don't need to modify these:
@@ -39,7 +43,7 @@ void setup() {
   digitalWrite(WINC_EN, HIGH);
 #endif
 
-  Serial.begin(9600); //Initialize serial and wait for port to open
+  Serial.begin(BAUD_RATE); //Initialize serial and wait for port to open
   while (!Serial) {;} // wait for serial port to connect. Needed for native USB port only
 
   // check for the presence of the shield:
@@ -65,9 +69,21 @@ void loop() {
   if (millis() - lastConnectionTime > postingInterval) {
       httpRequest("/cycle", pump_status);
       httpRequest("/ac", ac_status);
+      httpRequest("/hub_temp", hubTemp());
       pump_status = !pump_status;
       ac_status = 1;
   }
+}
+
+int hubTemp() {
+  const int sensor_voltage = analogRead(TEMP_SENSOR_PIN);
+  const float voltage = sensor_voltage * SUPPLY_VOLTAGE / 1024;
+  return scaled_value((voltage * 1000 - 500) / 10); 
+}
+
+long scaled_value(const float value) {
+  float round_offset = value < 0 ? -0.5 : 0.5;
+  return (long)(value * 100 + round_offset);
 }
 
 void httpRequest(char *endpoint, int data) {
@@ -77,18 +93,21 @@ void httpRequest(char *endpoint, int data) {
 
   // if there's a successful connection:
   if (client.connect(server, 80)) {
+    String payload("{\"state\":\"");
+    payload += data;
+    payload += "\"}";
     Serial.println("connecting...");
     Serial.print("Endpoint: "); Serial.println(endpoint);
-    Serial.print("Pump Data: "); Serial.println(data);
+    Serial.print("Payload: "); Serial.println(payload);
     // Make a HTTP request:
     client.print("POST ");
     client.print(endpoint); client.println(" HTTP/1.1");
     client.print("Host: "); client.println(server);
     client.print("Content-Type: "); client.println("application/json");
-    client.print("Content-Length: "); client.println("13");
+    client.print("Content-Length: "); client.println(payload.length());
     client.println("Connection: close");
     client.println();
-    client.print("{\"state\":\""); client.print(data); client.println("\"}");
+    client.println(payload);
     client.println();
     client.flush();
 
@@ -104,6 +123,7 @@ void httpRequest(char *endpoint, int data) {
 }
 
 void printResponse() {
+  Serial.write("Waiting for response...");
   while(!client.available()){;} //wait for the request to finish.
     
   // if there's incoming data from the net connection.
