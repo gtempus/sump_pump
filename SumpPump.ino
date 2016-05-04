@@ -12,9 +12,10 @@ const unsigned int BAUD_RATE       = 9600;
 // Define the WINC1500 board connections below.
 // If you're following the Adafruit WINC1500 board
 // guide you don't need to modify these:
-#define WINC_CS   8
-#define WINC_IRQ  7
-#define WINC_RST  4
+const unsigned int WINC_CS  = 8;
+const unsigned int WINC_IRQ = 7;
+const unsigned int WINC_RST = 4;
+
 // The SPI pins of the WINC1500 (SCK, MOSI, MISO) should be
 // connected to the hardware SPI port of the Arduino.
 // On an Uno or compatible these are SCK = #13, MISO = #12, MOSI = #11.
@@ -24,9 +25,9 @@ const unsigned int BAUD_RATE       = 9600;
 // Setup the WINC1500 connection with the pins above and the default hardware SPI.
 Adafruit_WINC1500 WiFi(WINC_CS, WINC_IRQ, WINC_RST);
 
-const char ssid[] = "Apple Network ad29eb";      //  your network SSID (name)
-const char pass[] = "yqtianja4cgdu0wa";   // your network password
-int status = WL_IDLE_STATUS;
+const char SSID[] = "Apple Network ad29eb";      //  your network SSID (name)
+const char PASS[] = "yqtianja4cgdu0wa";   // your network password
+int status        = WL_IDLE_STATUS;
 
 // Initialize the Wifi client library
 Adafruit_WINC1500Client client;
@@ -35,20 +36,20 @@ Adafruit_WINC1500Client client;
 IPAddress server(192,168,254,51);  // numeric IP for test page (no DNS)
 
 unsigned long       lastTempConnectionTime = 0;
-const unsigned long tempPostingInterval    = 60L * 1000L;
+const unsigned long TEMP_POSTING_INTERVAL  = 60L * 1000L;
 
-bool pump_status = 0; // Pull-up resistor causes '1' to represent pump OFF; '0' for pump ON.
-bool ac_status = 1;   // Pull-up resistor causes '0' to represent pump AC ON; '1' for pump AC OFF.
+bool pump_status = 1; // Pull-up resistor causes '1' to represent pump OFF; '0' for pump ON.
+bool ac_status   = 1; // Pull-up resistor causes '0' to represent pump AC ON; '1' for pump AC OFF.
 
 void setup() {
   Serial.begin(BAUD_RATE); //Initialize serial and wait for port to open
   while (!Serial) {;} // wait for serial port to connect. Needed for native USB port only
 
-  pinMode(PUMP_CYCLE_TEST_PIN, INPUT);
+  pinMode     (PUMP_CYCLE_TEST_PIN, INPUT);
   digitalWrite(PUMP_CYCLE_TEST_PIN, HIGH); // Set internal pull-up resistor.
 
-  pinMode(PUMP_AC_TEST_PIN, INPUT);
-  digitalWrite(PUMP_AC_TEST_PIN, HIGH); // Set internal pull-up resistor.
+  pinMode     (PUMP_AC_TEST_PIN, INPUT);
+  digitalWrite(PUMP_AC_TEST_PIN, HIGH);    // Set internal pull-up resistor.
   
   // check for the presence of the shield:
   if (WiFi.status() == WL_NO_SHIELD) {
@@ -59,8 +60,8 @@ void setup() {
   // attempt to connect to Wifi network:
   while ( status != WL_CONNECTED) {
     Serial.print("Attempting to connect to SSID: ");
-    Serial.println(ssid);
-    status = WiFi.begin(ssid, pass); // Connect to WPA/WPA2 network.
+    Serial.println(SSID);
+    status = WiFi.begin(SSID, PASS); // Connect to WPA/WPA2 network.
     delay(10000); // wait 10 seconds for connection
   }
   
@@ -80,7 +81,7 @@ void loop() {
     httpRequest("/ac", !ac_status);
   }
 
-  if (millis() - lastTempConnectionTime > tempPostingInterval) {
+  if (millis() - lastTempConnectionTime > TEMP_POSTING_INTERVAL) {
     httpRequest("/hub_temp", hubTemp());
     lastTempConnectionTime = millis();
   }
