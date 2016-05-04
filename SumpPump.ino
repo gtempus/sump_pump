@@ -34,13 +34,11 @@ Adafruit_WINC1500Client client;
 // server address:
 IPAddress server(192,168,254,51);  // numeric IP for test page (no DNS)
 
-unsigned long       lastConnectionTime     = 0;            // last time you connected to the server, in milliseconds
-const unsigned long postingInterval        = 10L * 1000L; // delay between updates, in milliseconds
 unsigned long       lastTempConnectionTime = 0;
 const unsigned long tempPostingInterval    = 60L * 1000L;
 
-bool pump_status = 1; // Pull-up resistor causes '1' to represent pump OFF; '0' for pump ON.
-bool ac_status = 0;   // Pull-up resistor causes '0' to represent pump AC ON; '1' for pump AC OFF.
+bool pump_status = 0; // Pull-up resistor causes '1' to represent pump OFF; '0' for pump ON.
+bool ac_status = 1;   // Pull-up resistor causes '0' to represent pump AC ON; '1' for pump AC OFF.
 
 void setup() {
   Serial.begin(BAUD_RATE); //Initialize serial and wait for port to open
@@ -48,6 +46,9 @@ void setup() {
 
   pinMode(PUMP_CYCLE_TEST_PIN, INPUT);
   digitalWrite(PUMP_CYCLE_TEST_PIN, HIGH); // Set internal pull-up resistor.
+
+  pinMode(PUMP_AC_TEST_PIN, INPUT);
+  digitalWrite(PUMP_AC_TEST_PIN, HIGH); // Set internal pull-up resistor.
   
   // check for the presence of the shield:
   if (WiFi.status() == WL_NO_SHIELD) {
@@ -67,17 +68,16 @@ void setup() {
 }
 
 void loop() {
-  // if ten seconds have passed since your last connection,
-  // then connect again and send data:
-  if (millis() - lastConnectionTime > postingInterval) {
-      httpRequest("/ac", ac_status);
-      ac_status = 1;
-  }
-
   int pump_cycle_current_state = digitalRead(PUMP_CYCLE_TEST_PIN);
   if (pump_cycle_current_state != pump_status) {
-    pump_status = !pump_cycle_current_state;
-    httpRequest("/cycle", pump_status);
+    pump_status = pump_cycle_current_state;
+    httpRequest("/cycle", !pump_status);
+  }
+
+  int pump_ac_current_state = digitalRead(PUMP_AC_TEST_PIN);
+  if (pump_ac_current_state != ac_status) {
+    ac_status = pump_ac_current_state;
+    httpRequest("/ac", !ac_status);
   }
 
   if (millis() - lastTempConnectionTime > tempPostingInterval) {
@@ -123,13 +123,12 @@ void httpRequest(char *endpoint, int data) {
     client.flush();
 
     printResponse();
-    
-    // note the time that the connection was made:
-    lastConnectionTime = millis();
    }
   else {
     // if you couldn't make a connection:
     Serial.println("connection failed");
+    Serial.print("Failed endpoint: "); Serial.println(endpoint);
+    Serial.print("Failed data: "); Serial.println(data);
   }
 }
 
