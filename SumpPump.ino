@@ -25,8 +25,8 @@ const unsigned int WINC_RST = 4;
 // Setup the WINC1500 connection with the pins above and the default hardware SPI.
 Adafruit_WINC1500 WiFi(WINC_CS, WINC_IRQ, WINC_RST);
 
-const char SSID[] = "Apple Network ad29eb";      //  your network SSID (name)
-const char PASS[] = "yqtianja4cgdu0wa";   // your network password
+const char SSID[] = "My Network SSID";      //  your network SSID (name)
+const char PASS[] = "My Passwd";   // your network password
 int status        = WL_IDLE_STATUS;
 
 // Initialize the Wifi client library
