@@ -1,1 +1,1 @@
-Start to document the sump pump project.
+Using WINC and SUNKEE current sensor in the garage for the sump pump.
